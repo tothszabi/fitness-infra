@@ -5,7 +5,7 @@ FROM wordpress:6.9-php8.2-fpm-alpine
 RUN apk upgrade --no-cache
 
 # Install Redis extension
-RUN apk add --no-cache pcre-dev $PHPIZE_DEPS \
+RUN apk add --no-cache pcre-dev fcgi $PHPIZE_DEPS \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del $PHPIZE_DEPS

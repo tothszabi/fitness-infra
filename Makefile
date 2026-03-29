@@ -7,6 +7,9 @@ CADDY_DIR := caddy
 DOZZLE_DIR := dozzle
 MONITORING_DIR := monitoring
 
+# docker compose command for the WP stack, pointing to the root .env for variable interpolation
+WP_COMPOSE := docker compose --env-file ../.env
+
 # Phony targets ensure Make doesn't confuse these commands with actual files
 .PHONY: help install up up-local down down-local restart logs-wp logs-caddy logs-monitoring backup shell-wp shell-db update clean
 
@@ -16,7 +19,9 @@ help:
 	@echo "--------------------------------------------------------"
 	@echo "make install         - First-time setup (creates .env if missing)"
 	@echo "make up              - Build and start the entire stack"
+	@echo "make up-local        - Start WordPress stack locally (no backup service)"
 	@echo "make down            - Stop and tear down the entire stack"
+	@echo "make down-local      - Stop the local WordPress stack"
 	@echo "make restart         - Restart the entire stack"
 	@echo "make logs-wp         - View real-time logs for WordPress/PHP/DB"
 	@echo "make logs-caddy      - View real-time logs for Caddy (SSL/Proxy)"
@@ -24,8 +29,6 @@ help:
 	@echo "make backup          - Manually trigger the backup script now"
 	@echo "make shell-wp        - Drop into the WordPress PHP container shell"
 	@echo "make shell-db        - Drop into the MariaDB container shell"
-	@echo "make up-local        - Start WordPress stack locally (no backup service)"
-	@echo "make down-local      - Stop the local WordPress stack"
 	@echo "make update          - Pull latest Docker images and recreate"
 	@echo "make clean           - DANGER: Remove all containers, volumes, and networks"
 
@@ -46,36 +49,36 @@ create-network:
 # Start WordPress stack locally without the backup service
 up-local: create-network
 	@echo "Building and starting WordPress stack (no backup)..."
-	@cd $(WP_DIR) && docker compose build && docker compose up -d db redis wordpress nginx cron
+	@cd $(WP_DIR) && $(WP_COMPOSE) build && $(WP_COMPOSE) up -d db redis wordpress nginx cron
 	@echo "WordPress stack running locally."
 
 # Stop the local WordPress stack
 down-local:
-	@cd $(WP_DIR) && docker compose down
+	@cd $(WP_DIR) && $(WP_COMPOSE) down
 	@echo "Local WordPress stack stopped."
 
 # Start everything
 up: create-network
 	@echo "Building and starting WordPress stack..."
-	@cd $(WP_DIR) && docker compose build && docker compose up -d
+	@cd $(WP_DIR) && $(WP_COMPOSE) build && $(WP_COMPOSE) up -d
 	@echo "Starting Dozzle Log Viewer..."
-	@cd $(DOZZLE_DIR) && docker compose up -d
+	@cd $(DOZZLE_DIR) && $(WP_COMPOSE) up -d
 	@echo "Starting Caddy gateway..."
-	@cd $(CADDY_DIR) && docker compose up -d
+	@cd $(CADDY_DIR) && $(WP_COMPOSE) up -d
 	@echo "Starting monitoring stack..."
-	@cd $(MONITORING_DIR) && docker compose up -d
+	@cd $(MONITORING_DIR) && $(WP_COMPOSE) up -d
 	@echo "All systems go! Your platform is live."
 
 # Stop everything
 down:
 	@echo "Stopping Caddy gateway..."
-	@cd $(CADDY_DIR) && docker compose down
+	@cd $(CADDY_DIR) && $(WP_COMPOSE) down
 	@echo "Stopping monitoring stack..."
-	@cd $(MONITORING_DIR) && docker compose down
+	@cd $(MONITORING_DIR) && $(WP_COMPOSE) down
 	@echo "Stopping Dozzle..."
-	@cd $(DOZZLE_DIR) && docker compose down
+	@cd $(DOZZLE_DIR) && $(WP_COMPOSE) down
 	@echo "Stopping WordPress stack..."
-	@cd $(WP_DIR) && docker compose down
+	@cd $(WP_DIR) && $(WP_COMPOSE) down
 	@echo "All services stopped."
 
 # Restart everything
@@ -83,15 +86,15 @@ restart: down up
 
 # View WordPress stack logs
 logs-wp:
-	@cd $(WP_DIR) && docker compose logs -f
+	@cd $(WP_DIR) && $(WP_COMPOSE) logs -f
 
 # View Caddy gateway logs
 logs-caddy:
-	@cd $(CADDY_DIR) && docker compose logs -f
+	@cd $(CADDY_DIR) && $(WP_COMPOSE) logs -f
 
 # View monitoring stack logs
 logs-monitoring:
-	@cd $(MONITORING_DIR) && docker compose logs -f
+	@cd $(MONITORING_DIR) && $(WP_COMPOSE) logs -f
 
 # Manually trigger a backup immediately (great before running WordPress updates)
 backup:
@@ -109,19 +112,19 @@ shell-db:
 # Pull latest images and restart
 update:
 	@echo "Pulling latest images..."
-	@cd $(WP_DIR) && docker compose pull
-	@cd $(CADDY_DIR) && docker compose pull
-	@cd $(DOZZLE_DIR) && docker compose pull
-	@cd $(MONITORING_DIR) && docker compose pull
+	@cd $(WP_DIR) && $(WP_COMPOSE) pull
+	@cd $(CADDY_DIR) && $(WP_COMPOSE) pull
+	@cd $(DOZZLE_DIR) && $(WP_COMPOSE) pull
+	@cd $(MONITORING_DIR) && $(WP_COMPOSE) pull
 	@$(MAKE) up
 
 # Danger Zone: Completely wipe the infrastructure
 clean: down
 	@echo "Removing Docker volumes..."
-	@cd $(WP_DIR) && docker compose down -v
-	@cd $(CADDY_DIR) && docker compose down -v
-	@cd $(DOZZLE_DIR) && docker compose down -v
-	@cd $(MONITORING_DIR) && docker compose down -v
+	@cd $(WP_DIR) && $(WP_COMPOSE) down -v
+	@cd $(CADDY_DIR) && $(WP_COMPOSE) down -v
+	@cd $(DOZZLE_DIR) && $(WP_COMPOSE) down -v
+	@cd $(MONITORING_DIR) && $(WP_COMPOSE) down -v
 	@echo "Removing network..."
 	@docker network rm $(NETWORK_NAME) || true
 	@echo "Infrastructure wiped."
