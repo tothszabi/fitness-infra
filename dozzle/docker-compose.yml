@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      # These pull directly from your root .env file
+      DOZZLE_USERNAME: ${DOZZLE_USERNAME}
+      DOZZLE_PASSWORD: ${DOZZLE_PASSWORD}
+    volumes:
+      # Mount the Docker socket as Read-Only (ro) for strict security
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - webproxy
+
+networks:
+  webproxy:
+    external: true

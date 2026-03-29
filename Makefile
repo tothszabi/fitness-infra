@@ -4,6 +4,7 @@
 NETWORK_NAME := webproxy
 WP_DIR := fitness-platform
 CADDY_DIR := caddy
+DOZZLE_DIR := dozzle
 
 # Phony targets ensure Make doesn't confuse these commands with actual files
 .PHONY: help install up down restart logs-wp logs-caddy backup shell-wp shell-db update clean
@@ -42,6 +43,8 @@ create-network:
 up: create-network
     @echo "🚀 Building and starting WordPress stack..."
     @cd $(WP_DIR) && docker compose build && docker compose up -d
+    @echo "📊 Starting Dozzle Log Viewer..."
+    @cd $(DOZZLE_DIR) && docker compose up -d
     @echo "🛡️ Starting Caddy gateway..."
     @cd $(CADDY_DIR) && docker compose up -d
     @echo "✅ All systems go! Your platform is live."
@@ -50,6 +53,8 @@ up: create-network
 down:
     @echo "Stopping Caddy gateway..."
     @cd $(CADDY_DIR) && docker compose down
+    @echo "Stopping Dozzle..."
+    @cd $(DOZZLE_DIR) && docker compose down
     @echo "Stopping WordPress stack..."
     @cd $(WP_DIR) && docker compose down
     @echo "🛑 All services stopped."
@@ -78,18 +83,20 @@ shell-wp:
 shell-db:
     @docker exec -it fitness_db bash
 
-# Pull latest images and restart (Great for applying security patches to Alpine/Nginx)
+# Pull latest images and restart
 update:
     @echo "⬇️ Pulling latest images..."
     @cd $(WP_DIR) && docker compose pull
     @cd $(CADDY_DIR) && docker compose pull
+    @cd $(DOZZLE_DIR) && docker compose pull
     @$(MAKE) up
 
-# Danger Zone: Completely wipe the infrastructure (Does NOT delete your host files/scripts)
+# Danger Zone: Completely wipe the infrastructure
 clean: down
-    @echo "⚠️ Removing Docker volumes (Database and WP files)..."
+    @echo "⚠️ Removing Docker volumes..."
     @cd $(WP_DIR) && docker compose down -v
     @cd $(CADDY_DIR) && docker compose down -v
+    @cd $(DOZZLE_DIR) && docker compose down -v
     @echo "🧹 Removing network..."
     @docker network rm $(NETWORK_NAME) || true
     @echo "💀 Infrastructure wiped."

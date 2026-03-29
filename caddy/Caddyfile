@@ -21,3 +21,10 @@ fitness.com {
 www.fitness.com {
     redir https://fitness.com{uri} permanent
 }
+
+# Secure Dozzle Log Viewer
+logs.fitness.com {
+    tls admin@fitness.com
+    # Dozzle runs on port 8080 internally
+    reverse_proxy dozzle:8080
+}
