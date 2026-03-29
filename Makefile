@@ -8,7 +8,7 @@ DOZZLE_DIR := dozzle
 MONITORING_DIR := monitoring
 
 # Phony targets ensure Make doesn't confuse these commands with actual files
-.PHONY: help install up down restart logs-wp logs-caddy logs-monitoring backup shell-wp shell-db update clean
+.PHONY: help install up up-local down down-local restart logs-wp logs-caddy logs-monitoring backup shell-wp shell-db update clean
 
 # Default command when typing just `make`
 help:
@@ -24,6 +24,8 @@ help:
 	@echo "make backup          - Manually trigger the backup script now"
 	@echo "make shell-wp        - Drop into the WordPress PHP container shell"
 	@echo "make shell-db        - Drop into the MariaDB container shell"
+	@echo "make up-local        - Start WordPress stack locally (no backup service)"
+	@echo "make down-local      - Stop the local WordPress stack"
 	@echo "make update          - Pull latest Docker images and recreate"
 	@echo "make clean           - DANGER: Remove all containers, volumes, and networks"
 
@@ -40,6 +42,17 @@ install:
 # Create the proxy network if it doesn't exist
 create-network:
 	@docker network ls | grep -q $(NETWORK_NAME) || docker network create $(NETWORK_NAME)
+
+# Start WordPress stack locally without the backup service
+up-local: create-network
+	@echo "Building and starting WordPress stack (no backup)..."
+	@cd $(WP_DIR) && docker compose build && docker compose up -d db redis wordpress nginx cron
+	@echo "WordPress stack running locally."
+
+# Stop the local WordPress stack
+down-local:
+	@cd $(WP_DIR) && docker compose down
+	@echo "Local WordPress stack stopped."
 
 # Start everything
 up: create-network
