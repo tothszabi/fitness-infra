@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.talkincyber.com)",
+      "WebFetch(domain:hackviser.com)",
+      "WebFetch(domain:owasp.org)",
+      "WebFetch(domain:caddyserver.com)",
+      "WebFetch(domain:mwop.net)",
+      "WebFetch(domain:stanislas.blog)"
+    ]
+  }
+}

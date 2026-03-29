@@ -1,4 +1,8 @@
-FROM wordpress:8.2-fpm-alpine
+FROM wordpress:6.9-php8.2-fpm-alpine
+
+# Upgrade all Alpine packages to pick up OS-level security patches
+# (base image may lag behind latest Alpine security advisories)
+RUN apk upgrade --no-cache
 
 # Install Redis extension
 RUN apk add --no-cache pcre-dev $PHPIZE_DEPS \
