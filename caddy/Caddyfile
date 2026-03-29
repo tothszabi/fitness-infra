@@ -1,0 +1,8 @@
+fitness.com {
+    tls admin@fitness.com
+    reverse_proxy fitness_nginx:80
+}
+
+www.fitness.com {
+    redir https://fitness.com{uri}
+}

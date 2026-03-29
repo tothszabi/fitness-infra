@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb:10.11
+    container_name: fitness_db
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    command: 
+      - 'mysqld'
+      - '--innodb-buffer-pool-size=2G'
+      - '--innodb-buffer-pool-instances=2'
+      - '--innodb-log-file-size=512M'
+      - '--innodb-flush-method=O_DIRECT'
+      - '--max-connections=200'
+      - '--skip-name-resolve'
+
+  redis:
+    image: redis:7-alpine
+    container_name: fitness_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  wordpress:
+    build:
+      context: ./php
+    container_name: fitness_php
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('DISABLE_WP_CRON', true);
+        define('WP_REDIS_HOST', 'redis');
+        define('WP_REDIS_PORT', 6379);
+        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+            $_SERVER['HTTPS'] = 'on';
+        }
+    volumes:
+      - wp_data:/var/www/html
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    image: nginx:alpine
+    container_name: fitness_nginx
+    restart: unless-stopped
+    volumes:
+      - wp_data:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - wordpress
+    networks:
+      - default
+      - webproxy
+
+  cron:
+    image: alpine:latest
+    container_name: fitness_cron
+    restart: unless-stopped
+    command: sh -c "apk add --no-cache curl && while true; do curl -s http://nginx/wp-cron.php?doing_wp_cron > /dev/null 2>&1; sleep 60; done"
+    depends_on:
+      - nginx
+
+  # backup:
+  #   image: alpine:latest
+  #   container_name: fitness_backup
+  #   restart: unless-stopped
+  #   env_file: ../.env
+  #   environment:
+  #     DB_HOST: db
+  #     DB_NAME: ${DB_NAME}
+  #     DB_USER: ${DB_USER}
+  #     DB_PASSWORD: ${DB_PASSWORD}
+  #     AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+  #     AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  #     S3_ENDPOINT: ${S3_ENDPOINT}
+  #     S3_BUCKET: ${S3_BUCKET}
+  #   volumes:
+  #     - ./backups:/backups
+  #     - ./scripts/backup.sh:/backup.sh:ro
+  #     - wp_data:/var/www/html:ro
+  #   depends_on:
+  #     - db
+  #   command: >
+  #     sh -c "apk add --no-cache mariadb-client aws-cli tzdata
+  #     && echo '0 3 * * * /backup.sh' > /etc/crontabs/root
+  #     && crond -f -d 8"
+
+volumes:
+  db_data:
+  wp_data:
+
+networks:
+  default:
+  webproxy:
+    external: true
