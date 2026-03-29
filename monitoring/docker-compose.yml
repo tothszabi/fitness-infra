@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  alloy:
+    image: grafana/alloy:v1.14.2
+    container_name: fitness_alloy
+    restart: unless-stopped
+    env_file: ../.env
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: run /etc/alloy/config.alloy
+    networks:
+      - monitoring
+    depends_on:
+      - cadvisor
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.56.2
+    container_name: fitness_cadvisor
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    networks:
+      - monitoring
+
+networks:
+  monitoring:

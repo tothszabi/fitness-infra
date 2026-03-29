@@ -5,9 +5,10 @@ NETWORK_NAME := webproxy
 WP_DIR := fitness-platform
 CADDY_DIR := caddy
 DOZZLE_DIR := dozzle
+MONITORING_DIR := monitoring
 
 # Phony targets ensure Make doesn't confuse these commands with actual files
-.PHONY: help install up down restart logs-wp logs-caddy backup shell-wp shell-db update clean
+.PHONY: help install up down restart logs-wp logs-caddy logs-monitoring backup shell-wp shell-db update clean
 
 # Default command when typing just `make`
 help:
@@ -19,6 +20,7 @@ help:
     @echo "make restart    - Restart the entire stack"
     @echo "make logs-wp    - View real-time logs for WordPress/PHP/DB"
     @echo "make logs-caddy - View real-time logs for Caddy (SSL/Proxy)"
+	@echo "make logs-monitoring - View real-time logs for Alloy/cAdvisor"
     @echo "make backup     - Manually trigger the backup script now"
     @echo "make shell-wp   - Drop into the WordPress PHP container shell"
     @echo "make shell-db   - Drop into the MariaDB container shell"
@@ -37,7 +39,7 @@ install:
 
 # Create the proxy network if it doesn't exist
 create-network:
-    @docker network ls | grep -q $(NETWORK_NAME) || docker network create $(NETWORK_NAME)
+	@docker network ls | grep -q $(NETWORK_NAME) || docker network create $(NETWORK_NAME)
 
 # Start everything
 up: create-network
@@ -46,18 +48,22 @@ up: create-network
     @echo "📊 Starting Dozzle Log Viewer..."
     @cd $(DOZZLE_DIR) && docker compose up -d
     @echo "🛡️ Starting Caddy gateway..."
-    @cd $(CADDY_DIR) && docker compose up -d
-    @echo "✅ All systems go! Your platform is live."
+	@cd $(CADDY_DIR) && docker compose up -d
+	@echo "📈 Starting monitoring stack..."
+	@cd $(MONITORING_DIR) && docker compose up -d
+	@echo "✅ All systems go! Your platform is live."
 
 # Stop everything
 down:
     @echo "Stopping Caddy gateway..."
-    @cd $(CADDY_DIR) && docker compose down
-    @echo "Stopping Dozzle..."
-    @cd $(DOZZLE_DIR) && docker compose down
-    @echo "Stopping WordPress stack..."
-    @cd $(WP_DIR) && docker compose down
-    @echo "🛑 All services stopped."
+	@cd $(CADDY_DIR) && docker compose down
+	@echo "Stopping monitoring stack..."
+	@cd $(MONITORING_DIR) && docker compose down
+	@echo "Stopping Dozzle..."
+	@cd $(DOZZLE_DIR) && docker compose down
+	@echo "Stopping WordPress stack..."
+	@cd $(WP_DIR) && docker compose down
+	@echo "🛑 All services stopped."
 
 # Restart everything
 restart: down up
@@ -68,7 +74,11 @@ logs-wp:
 
 # View Caddy gateway logs
 logs-caddy:
-    @cd $(CADDY_DIR) && docker compose logs -f
+	@cd $(CADDY_DIR) && docker compose logs -f
+
+# View monitoring stack logs
+logs-monitoring:
+	@cd $(MONITORING_DIR) && docker compose logs -f
 
 # Manually trigger a backup immediately (great before running WordPress updates)
 backup:
@@ -87,16 +97,18 @@ shell-db:
 update:
     @echo "⬇️ Pulling latest images..."
     @cd $(WP_DIR) && docker compose pull
-    @cd $(CADDY_DIR) && docker compose pull
-    @cd $(DOZZLE_DIR) && docker compose pull
-    @$(MAKE) up
+	@cd $(CADDY_DIR) && docker compose pull
+	@cd $(DOZZLE_DIR) && docker compose pull
+	@cd $(MONITORING_DIR) && docker compose pull
+	@$(MAKE) up
 
 # Danger Zone: Completely wipe the infrastructure
 clean: down
     @echo "⚠️ Removing Docker volumes..."
     @cd $(WP_DIR) && docker compose down -v
-    @cd $(CADDY_DIR) && docker compose down -v
-    @cd $(DOZZLE_DIR) && docker compose down -v
-    @echo "🧹 Removing network..."
-    @docker network rm $(NETWORK_NAME) || true
-    @echo "💀 Infrastructure wiped."
+	@cd $(CADDY_DIR) && docker compose down -v
+	@cd $(DOZZLE_DIR) && docker compose down -v
+	@cd $(MONITORING_DIR) && docker compose down -v
+	@echo "🧹 Removing network..."
+	@docker network rm $(NETWORK_NAME) || true
+	@echo "💀 Infrastructure wiped."

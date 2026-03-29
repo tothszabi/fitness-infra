@@ -1,0 +1,44 @@
+// =============================================================================
+// Docker Log Collection → Grafana Cloud Loki
+// =============================================================================
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.containers.targets
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
+
+loki.write "grafana_cloud" {
+  endpoint {
+    url = env("GRAFANA_CLOUD_LOKI_URL")
+
+    basic_auth {
+      username = env("GRAFANA_CLOUD_LOKI_USER")
+      password = env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}
+
+// =============================================================================
+// cAdvisor Container Metrics → Grafana Cloud Prometheus
+// =============================================================================
+
+prometheus.scrape "cadvisor" {
+  targets    = [{"__address__" = "fitness_cadvisor:8080"}]
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = env("GRAFANA_CLOUD_PROMETHEUS_URL")
+
+    basic_auth {
+      username = env("GRAFANA_CLOUD_PROMETHEUS_USER")
+      password = env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}

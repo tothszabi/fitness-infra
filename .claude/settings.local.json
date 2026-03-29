@@ -7,7 +7,9 @@
       "WebFetch(domain:owasp.org)",
       "WebFetch(domain:caddyserver.com)",
       "WebFetch(domain:mwop.net)",
-      "WebFetch(domain:stanislas.blog)"
+      "WebFetch(domain:stanislas.blog)",
+      "WebFetch(domain:hub.docker.com)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
