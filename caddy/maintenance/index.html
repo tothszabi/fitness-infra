@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Breathing Through Maintenance — Back Soon</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f7f4ef;
+      color: #2c2c2c;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .card {
+      text-align: center;
+      padding: 3.5rem 2.5rem;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    /* Breathing circle */
+    .breath-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 140px;
+      margin-bottom: 0.5rem;
+    }
+
+    .breath-ring {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 38%, #c8e6c9, #81c784);
+      box-shadow: 0 0 0 0 rgba(129, 199, 132, 0.5);
+      animation: breathe 5s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.6rem;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(1);    box-shadow: 0 0 0  0px rgba(129,199,132,0.4); }
+      50%       { transform: scale(1.35); box-shadow: 0 0 0 24px rgba(129,199,132,0);   }
+    }
+
+    .breath-label {
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 2rem;
+      animation: breathe-text 5s ease-in-out infinite;
+    }
+
+    @keyframes breathe-text {
+      0%, 100% { opacity: 0.5; content: "inhale..."; }
+      45%, 55% { opacity: 1; }
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: #2c2c2c;
+      line-height: 1.25;
+      letter-spacing: -0.3px;
+    }
+
+    h1 span {
+      color: #5a8f5c;
+    }
+
+    .subtitle {
+      margin-top: 0.85rem;
+      font-size: 1rem;
+      color: #777;
+      line-height: 1.65;
+    }
+
+    .affirmation {
+      margin-top: 2rem;
+      padding: 1.1rem 1.4rem;
+      background: #eef5ee;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      color: #4a7a4c;
+      font-style: italic;
+      line-height: 1.6;
+    }
+
+    .affirmation small {
+      display: block;
+      margin-top: 0.4rem;
+      font-style: normal;
+      font-size: 0.78rem;
+      color: #aaa;
+    }
+
+    .poses {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 2rem;
+      font-size: 2rem;
+    }
+
+    .poses span {
+      display: inline-block;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .poses span:nth-child(2) { animation-delay: 0.6s; }
+    .poses span:nth-child(3) { animation-delay: 1.2s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-8px); }
+    }
+
+    footer {
+      margin-top: 2.5rem;
+      font-size: 0.78rem;
+      color: #bbb;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="breath-wrap">
+      <div class="breath-ring">🧘</div>
+    </div>
+    <div class="breath-label">just breathe</div>
+
+    <h1>The server is<br><span>finding its center.</span></h1>
+    <p class="subtitle">
+      We're doing a little maintenance.<br>
+      Just like pilates — intentional, controlled,<br>and weirdly exhausting.
+    </p>
+
+    <div class="affirmation">
+      "I release attachment to page loads.<br>
+      I am not my 502 error.<br>
+      The uptime I seek is within me."
+      <small>— A mindful server, currently in child's pose</small>
+    </div>
+
+    <div class="poses">
+      <span title="Warrior II">🧎</span>
+      <span title="Tree pose">🌿</span>
+      <span title="Savasana (the server's favourite)">😌</span>
+    </div>
+
+    <footer>Back soon. Use this time to hydrate and journal about your feelings.</footer>
+  </div>
+</body>
+</html>

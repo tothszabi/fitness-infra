@@ -16,6 +16,12 @@ fitness.com {
     }
 
     reverse_proxy fitness_nginx:80
+
+    handle_errors 502 503 504 {
+        root * /srv/maintenance
+        rewrite * /index.html
+        file_server
+    }
 }
 
 www.fitness.com {
